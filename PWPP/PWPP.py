@@ -8,7 +8,8 @@ import datetime
 from wrf import getvar, ALL_TIMES
 import warnings
 from .variable_def import get_variables
-from .calc import get_isobaric_variables, get_precip, get_timestep_precip
+from .calc import (get_isobaric_variables, get_precip, get_timestep_precip,
+                   get_temp_2m, get_q_2m, get_u_10m, get_v_10m, get_mslp)
 
 
 def wrfpost(inname, outname, variables, plevs=None):
@@ -49,14 +50,11 @@ def wrfpost(inname, outname, variables, plevs=None):
     # parse input variable list against dictionary to pull out isobaric,
     # wrf-python, and other variables
     iso_vars = []
-    wrf_vars = []
     other_vars = []
     for variable in variables:
         var_def = get_variables()
         if var_def[variable][1] == 1:
             iso_vars.append(variable)
-        elif var_def[variable][1] == 0:
-            wrf_vars.append(variable)
         else:
             other_vars.append(variable)
 
@@ -109,5 +107,21 @@ def wrfpost(inname, outname, variables, plevs=None):
 
     if 'timestep_pcp' in other_vars:
         get_timestep_precip(data, outfile)
+
+    # get surface variables if requested
+    if 'temp_2m' in other_vars:
+        get_temp_2m(data, outfile)
+
+    if 'q_2m' in other_vars:
+        get_q_2m(data, outfile)
+
+    if 'u_10m' in other_vars:
+        get_u_10m(data, outfile)
+
+    if 'v_10m' in other_vars:
+        get_v_10m(data, outfile)
+
+    if 'mslp' in other_vars:
+        get_mslp(data, outfile)
 
     outfile.close()

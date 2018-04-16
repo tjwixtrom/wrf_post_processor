@@ -88,3 +88,59 @@ def get_timestep_precip(data, outfile):
     pcp_data.units = str(tot_pcp.units)
     pcp_data.description = 'Total Timestep Accumulated Precpitation'
     pcp_data[:] = ts_pcp
+
+
+def get_temp_2m(data, outfile):
+    """Gets the 2m temperature data"""
+    temp_2m = data.variables['T2'][:]
+    temp_data = outfile.createVariable(
+                'temp_2m',
+                'f8',
+                ('Time', 'Latitude', 'Longitude'))
+    temp_data.units = data.variables['T2'].units
+    temp_data.description = data.variables['T2'].description
+    temp_data[:] = temp_2m
+
+
+def get_q_2m(data, outfile):
+    q_2m = data.variables['Q2'][:]
+    q_data = outfile.createVariable(
+                'q_2m',
+                'f8',
+                ('Time', 'Latitude', 'Longitude'))
+    q_data.units = data.variables['Q2'].units
+    q_data.description = data.variables['Q2'].description
+    q_data[:] = q_2m
+
+
+def get_v_10m(data, outfile):
+    v_10m = data.variables['V10'][:]
+    v_data = outfile.createVariable(
+                'v_10m',
+                'f8',
+                ('Time', 'Latitude', 'Longitude'))
+    v_data.units = data.variables['V10'].units
+    v_data.description = data.variables['V10'].description
+    v_data[:] = v_10m
+
+
+def get_u_10m(data, outfile):
+    u_10m = data.variables['U10'][:]
+    u_data = outfile.createVariable(
+                'u_10m',
+                'f8',
+                ('Time', 'Latitude', 'Longitude'))
+    u_data.units = data.variables['U10'].units
+    u_data.description = data.variables['U10'].description
+    u_data[:] = u_10m
+
+
+def get_mslp(data, outfile):
+    slp = getvar(data, 'slp', ALL_TIMES)
+    slp_data = outfile.createVariable(
+                'mslp',
+                'f8',
+                ('Time', 'Latitude', 'Longitude'))
+    slp_data.units = slp.units
+    slp_data.description = slp.description
+    slp_data[:] = slp
