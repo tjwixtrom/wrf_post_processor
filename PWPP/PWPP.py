@@ -9,7 +9,8 @@ from wrf import getvar, ALL_TIMES
 import warnings
 from .variable_def import get_variables
 from .calc import (get_isobaric_variables, get_precip, get_timestep_precip,
-                   get_temp_2m, get_q_2m, get_u_10m, get_v_10m, get_mslp)
+                   get_temp_2m, get_q_2m, get_u_10m, get_v_10m, get_mslp, get_uh,
+                   get_cape, get_dbz)
 
 
 def wrfpost(inname, outname, variables, plevs=None):
@@ -18,6 +19,29 @@ def wrfpost(inname, outname, variables, plevs=None):
     :param inname: string of input file path
     :param outname: string of output file path
     :param variables: list of desired variable strings
+        Supported diagnostic variable strings:
+            uwnd: U-component of wind on isobaric levels
+            vwnd: V-component of wind on isobaric levels
+            wwnd: W-component of wind on isobaric levels
+            temp: Temperature on isobaric levels
+            dewpt: Dewpoint temperature on isobaric levels
+            avor: Absolute vorticity on isobaric levels
+            height: Geopotential height of isobaric levels
+            pres: Pressure on model levels
+            mslp: Pressure reduced to mean sea level
+            temp_2m: Temperature at 2m
+            q_2m: Specific humidity at 2m
+            u_10m: U-component of wind at 10m
+            v_10m: V-component of wind at 10m
+            conv_pcp: Shallow cumulus accumulated precipitation
+            grid_pcp: Grid scale accumulated precipitation
+            tot_pcp: Total accumulated precipitation
+            timestep_pcp: Total timestep accumulated precipitation
+            UH: Updraft helicity
+            cape: 2D convective available potetial energy
+            cin: 2D convective inhibition
+            refl: Maximum reflectivity
+
     :param plevs: optional array of desired output pressure levels
     :return: File of post-processed WRF output
     """
@@ -53,11 +77,15 @@ def wrfpost(inname, outname, variables, plevs=None):
     other_vars = []
     for variable in variables:
         var_def = get_variables()
-        if var_def[variable][1] == 1:
-            iso_vars.append(variable)
-        else:
-            other_vars.append(variable)
-
+        try:
+            var_def[variable]
+            if var_def[variable][1] == 1:
+                iso_vars.append(variable)
+            else:
+                other_vars.append(variable)
+        except KeyError:
+            outfile.close()
+            raise KeyError('Definition for '+variable+' not found.')
     # create dimension for isobaric levels
     if plevs is not None:
         outfile.createDimension('Pressure Levels', plevs.size)
@@ -124,4 +152,12 @@ def wrfpost(inname, outname, variables, plevs=None):
     if 'mslp' in other_vars:
         get_mslp(data, outfile)
 
+    if 'UH' in other_vars:
+        get_uh(data, outfile)
+
+    if ('cape' in other_vars) or ('cin' in other_vars):
+        get_cape(data, outfile)
+
+    if 'refl' in other_vars:
+        get_dbz(data, outfile)
     outfile.close()

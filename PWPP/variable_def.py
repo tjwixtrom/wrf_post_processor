@@ -23,6 +23,10 @@ def get_variables():
         'conv_pcp': ['Shallow cumulus accumulated precipitation', 2, 'RAINSH'],
         'grid_pcp': ['Grid scale accumulated precipitation', 2, 'RAINNC'],
         'tot_pcp': ['Total accumulated precipitation', 2, None],
-        'timestep_pcp': ['Total timestep accumulated precipitation', 2, None]
+        'timestep_pcp': ['Total timestep accumulated precipitation', 2, None],
+        'UH': ['Updraft helicity', 0, 'updraft_helicity'],
+        'cape': ['2D convective available potetial energy', 0, 'cape_2d'],
+        'cin': ['2D convective inhibition', 0, 'cape_2d'],
+        'refl': ['Maximum reflectivity', 0, 'mdbz']
     }
     return variables

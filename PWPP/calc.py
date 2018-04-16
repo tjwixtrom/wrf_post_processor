@@ -82,10 +82,12 @@ def get_timestep_precip(data, outfile):
 
     # Save to file
     pcp_data = outfile.createVariable(
-                'timestep_pcp',
+                'APCP_03',
                 'f8',
                 ('Time', 'Latitude', 'Longitude'))
     pcp_data.units = str(tot_pcp.units)
+    pcp_data.log_name = 'Timestep Precipitation Accumulation'
+    pcp_data.level = 'A3'
     pcp_data.description = 'Total Timestep Accumulated Precpitation'
     pcp_data[:] = ts_pcp
 
@@ -144,3 +146,46 @@ def get_mslp(data, outfile):
     slp_data.units = slp.units
     slp_data.description = slp.description
     slp_data[:] = slp
+
+
+def get_uh(data, outfile):
+    uh = getvar(data, 'updraft_helicity', ALL_TIMES)
+    uh_data = outfile.createVariable(
+                'UH',
+                'f8',
+                ('Time', 'Latitude', 'Longitude'))
+    uh_data.units = uh.units
+    uh_data.description = uh.description
+    uh_data[:] = uh
+
+
+def get_cape(data, outfile):
+    capecin = getvar(data, 'cape_2d', ALL_TIMES)
+    cape = np.array(capecin[0, ]) * units('J/kg')
+    cin = np.array(capecin[1, ]) * units('J/kg')
+    cape_data = outfile.createVariable(
+                'cape',
+                'f8',
+                ('Time', 'Latitude', 'Longitude'))
+    cape_data.units = str(cape.units)
+    cape_data.description = '2D Convective Available Potential Energy'
+    cape_data[:] = cape.m
+
+    cin_data = outfile.createVariable(
+                'cin',
+                'f8',
+                ('Time', 'Latitude', 'Longitude'))
+    cin_data.units = str(cin.units)
+    cin_data.description = '2D Convective Inhibition'
+    cin_data[:] = cin.m
+
+
+def get_dbz(data, outfile):
+    dbz = getvar(data, 'mdbz', ALL_TIMES)
+    dbz_data = outfile.createVariable(
+                'DBZ',
+                'f8',
+                ('Time', 'Latitude', 'Longitude'))
+    dbz_data.units = dbz.units
+    dbz_data.description = dbz.description
+    dbz_data[:] = dbz
