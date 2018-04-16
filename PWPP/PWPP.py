@@ -6,9 +6,9 @@ import numpy as np
 from netCDF4 import Dataset, date2num
 import datetime
 from wrf import getvar, ALL_TIMES
+import warnings
 from .variable_def import get_variables
 from .calc import get_isobaric_variables
-import warnings
 
 
 def wrfpost(inname, outname, variables, plevs=None):
@@ -20,7 +20,6 @@ def wrfpost(inname, outname, variables, plevs=None):
     :param plevs: optional array of desired output pressure levels
     :return: File of post-processed WRF output
     """
-
     # open the input file
     data = Dataset(inname)
 
@@ -47,13 +46,17 @@ def wrfpost(inname, outname, variables, plevs=None):
     outfile.createDimension('Latitude', data.dimensions['south_north'].size)
     outfile.createDimension('Longitude', data.dimensions['west_east'].size)
 
-    # parse input variable list against dictionart to pull out isobaric variables
+    # parse input variable list against dictionary to pull out isobaric,
+    # wrf-python, and other variables
     iso_vars = []
+    wrf_vars = []
     other_vars = []
     for variable in variables:
         var_def = get_variables()
         if var_def[variable][1] == 1:
             iso_vars.append(variable)
+        elif var_def[variable][1] == 0:
+            wrf_vars.append(variable)
         else:
             other_vars.append(variable)
 
@@ -75,16 +78,19 @@ def wrfpost(inname, outname, variables, plevs=None):
     valid_times.units = 'hours since ' + str(vtimes[0])
     valid_times.description = 'Model Forecast Times'
     valid_times[:] = date2num(vtimes, valid_times.units)
+    del vtimes
 
     latitude = outfile.createVariable('lat', 'f8', ('Time', 'Latitude', 'Longitude'))
     latitude.units = lat.units
     latitude.description = lat.description
     latitude[:] = np.array(lat)
+    del lat
 
     longitude = outfile.createVariable('lon', 'f8', ('Time', 'Latitude', 'Longitude'))
     longitude.units = lon.units
     longitude.description = lon.description
     longitude[:] = np.array(lon)
+    del lon
 
     # interpolate to isobaric levels and save to file
     get_isobaric_variables(data, iso_vars, plevs, outfile)
