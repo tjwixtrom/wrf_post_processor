@@ -25,9 +25,66 @@ def get_isobaric_variables(data, var_list, plevs, outfile):
 
     # write each of the variables to the output file
     for i in range(len(var_list)):
-        pres_data = outfile.createVariable(var_list[i], 'f8',
-                                          ('Time', 'Pressure Levels', 'Latitude',
-                                           'Longitude'))
+        pres_data = outfile.createVariable(
+                    var_list[i],
+                    'f8',
+                    ('Time', 'Pressure Levels', 'Latitude', 'Longitude'))
         pres_data.units = var_data[i].units
         pres_data.description = var_data[i].description
         pres_data[:] = iso_data[i]
+
+
+def get_precip(data, outfile, RAINNC_out=False, RAINSH_out=False):
+    """Gets the total precipitation from grid-scale and convective"""
+    # Get grid-scale and convective precip, add for total precip
+    grid_pcp = data.variables['RAINNC'][:] * units(data.variables['RAINNC'].units)
+    conv_pcp = data.variables['RAINSH'][:] * units(data.variables['RAINSH'].units)
+    tot_pcp = grid_pcp + conv_pcp
+
+    pcp_data = outfile.createVariable(
+                'tot_pcp',
+                'f8',
+                ('Time', 'Latitude', 'Longitude'))
+    pcp_data.units = str(tot_pcp.units)
+    pcp_data.description = 'Total Accumulated Precpitation'
+    pcp_data[:] = tot_pcp.m
+
+    if RAINNC_out:
+        grid_pcp_data = outfile.createVariable(
+                    'grid_pcp',
+                    'f8',
+                    ('Time', 'Latitude', 'Longitude'))
+        grid_pcp_data.units = str(grid_pcp.units)
+        grid_pcp_data.description = data.variables['RAINNC'].description
+        grid_pcp_data[:] = grid_pcp.m
+
+    if RAINSH_out:
+        conv_pcp_data = outfile.createVariable(
+                    'conv_pcp',
+                    'f8',
+                    ('Time', 'Latitude', 'Longitude'))
+        conv_pcp_data.units = str(conv_pcp.units)
+        conv_pcp_data.description = data.variables['RAINSH'].description
+        conv_pcp_data[:] = conv_pcp.m
+
+
+def get_timestep_precip(data, outfile):
+    """Gets the precipitation accumulation for each timestep"""
+    # Get grid-scale and convective precip, add for total precip
+    grid_pcp = data.variables['RAINNC'][:] * units(data.variables['RAINNC'].units)
+    conv_pcp = data.variables['RAINSH'][:] * units(data.variables['RAINSH'].units)
+    tot_pcp = grid_pcp + conv_pcp
+
+    # Calculate precip accumulation at each timestep
+    ts_pcp = np.zeros(tot_pcp.shape)
+    for i in range(tot_pcp.shape[0] - 1):
+        ts_pcp[i + 1, ] = tot_pcp[i + 1, ] - tot_pcp[i, ]
+
+    # Save to file
+    pcp_data = outfile.createVariable(
+                'timestep_pcp',
+                'f8',
+                ('Time', 'Latitude', 'Longitude'))
+    pcp_data.units = str(tot_pcp.units)
+    pcp_data.description = 'Total Timestep Accumulated Precpitation'
+    pcp_data[:] = ts_pcp

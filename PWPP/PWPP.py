@@ -8,7 +8,7 @@ import datetime
 from wrf import getvar, ALL_TIMES
 import warnings
 from .variable_def import get_variables
-from .calc import get_isobaric_variables
+from .calc import get_isobaric_variables, get_precip, get_timestep_precip
 
 
 def wrfpost(inname, outname, variables, plevs=None):
@@ -93,6 +93,21 @@ def wrfpost(inname, outname, variables, plevs=None):
     del lon
 
     # interpolate to isobaric levels and save to file
-    get_isobaric_variables(data, iso_vars, plevs, outfile)
+    if len(iso_vars) > 0:
+        get_isobaric_variables(data, iso_vars, plevs, outfile)
+
+    # get precipitation variables if requested
+    if 'tot_pcp' in other_vars:
+        if ('grid_pcp' in other_vars) and ('conv_pcp' in other_vars):
+            get_precip(data, outfile, RAINNC_out=True, RAINSH_out=True)
+        elif 'grid_pcp' in other_vars:
+            get_precip(data, outfile, RAINNC_out=True)
+        elif 'conv_pcp' in other_vars:
+            get_precip(data, outfile, RAINSH_out=True)
+        else:
+            get_precip(data, outfile)
+
+    if 'timestep_pcp' in other_vars:
+        get_timestep_precip(data, outfile)
 
     outfile.close()
