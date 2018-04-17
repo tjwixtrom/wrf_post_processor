@@ -67,9 +67,9 @@ def wrfpost(inname, outname, variables, plevs=None):
         setattr(outfile, name, getattr(data, name))
 
     # create output dimensions
-    outfile.createDimension('Time', data.dimensions['Time'].size)
-    outfile.createDimension('Latitude', data.dimensions['south_north'].size)
-    outfile.createDimension('Longitude', data.dimensions['west_east'].size)
+    outfile.createDimension('time', data.dimensions['Time'].size)
+    outfile.createDimension('lat', data.dimensions['south_north'].size)
+    outfile.createDimension('lon', data.dimensions['west_east'].size)
 
     # parse input variable list against dictionary to pull out isobaric,
     # wrf-python, and other variables
@@ -88,8 +88,8 @@ def wrfpost(inname, outname, variables, plevs=None):
             raise KeyError('Definition for '+variable+' not found.')
     # create dimension for isobaric levels
     if plevs is not None:
-        outfile.createDimension('Pressure Levels', plevs.size)
-        p_lev = outfile.createVariable('pressure levels', 'f8', ('Pressure Levels'))
+        outfile.createDimension('pressure levels', plevs.size)
+        p_lev = outfile.createVariable('pressure levels', 'f8', ('pressure levels'))
         p_lev.units = 'Pascal'
         p_lev.description = 'Isobaric Pressure Levels'
         p_lev[:] = plevs.to('Pa').m
@@ -100,19 +100,19 @@ def wrfpost(inname, outname, variables, plevs=None):
             raise ValueError('Isobaric variables requested, no pressure levels given')
 
     # write times, lats, lons, and plevs to output file
-    valid_times = outfile.createVariable('time', 'f8', ('Time',))
-    valid_times.units = 'hours since ' + str(vtimes[0])
+    valid_times = outfile.createVariable('valid_time_ut', 'f8', ('time',))
+    valid_times.units = 'seconds since 1970-01-01 UTC'
     valid_times.description = 'Model Forecast Times'
     valid_times[:] = date2num(vtimes, valid_times.units)
     del vtimes
 
-    latitude = outfile.createVariable('lat', 'f8', ('Time', 'Latitude', 'Longitude'))
+    latitude = outfile.createVariable('lat', 'f8', ('time', 'lat', 'lon'))
     latitude.units = lat.units
     latitude.description = lat.description
     latitude[:] = np.array(lat)
     del lat
 
-    longitude = outfile.createVariable('lon', 'f8', ('Time', 'Latitude', 'Longitude'))
+    longitude = outfile.createVariable('lon', 'f8', ('time', 'lat', 'lon'))
     longitude.units = lon.units
     longitude.description = lon.description
     longitude[:] = np.array(lon)

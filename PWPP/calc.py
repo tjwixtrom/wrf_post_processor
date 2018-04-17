@@ -28,7 +28,7 @@ def get_isobaric_variables(data, var_list, plevs, outfile):
         pres_data = outfile.createVariable(
                     var_list[i],
                     'f8',
-                    ('Time', 'Pressure Levels', 'Latitude', 'Longitude'))
+                    ('time', 'pressure levels', 'lat', 'lon'))
         pres_data.units = var_data[i].units
         pres_data.description = var_data[i].description
         pres_data[:] = iso_data[i]
@@ -44,7 +44,7 @@ def get_precip(data, outfile, RAINNC_out=False, RAINSH_out=False):
     pcp_data = outfile.createVariable(
                 'tot_pcp',
                 'f8',
-                ('Time', 'Latitude', 'Longitude'))
+                ('time', 'lat', 'lon'))
     pcp_data.units = str(tot_pcp.units)
     pcp_data.description = 'Total Accumulated Precpitation'
     pcp_data[:] = tot_pcp.m
@@ -53,7 +53,7 @@ def get_precip(data, outfile, RAINNC_out=False, RAINSH_out=False):
         grid_pcp_data = outfile.createVariable(
                     'grid_pcp',
                     'f8',
-                    ('Time', 'Latitude', 'Longitude'))
+                    ('time', 'lat', 'lon'))
         grid_pcp_data.units = str(grid_pcp.units)
         grid_pcp_data.description = data.variables['RAINNC'].description
         grid_pcp_data[:] = grid_pcp.m
@@ -62,7 +62,7 @@ def get_precip(data, outfile, RAINNC_out=False, RAINSH_out=False):
         conv_pcp_data = outfile.createVariable(
                     'conv_pcp',
                     'f8',
-                    ('Time', 'Latitude', 'Longitude'))
+                    ('time', 'lat', 'lon'))
         conv_pcp_data.units = str(conv_pcp.units)
         conv_pcp_data.description = data.variables['RAINSH'].description
         conv_pcp_data[:] = conv_pcp.m
@@ -82,12 +82,10 @@ def get_timestep_precip(data, outfile):
 
     # Save to file
     pcp_data = outfile.createVariable(
-                'APCP_03',
+                'timestep_pcp',
                 'f8',
-                ('Time', 'Latitude', 'Longitude'))
+                ('time', 'lat', 'lon'))
     pcp_data.units = str(tot_pcp.units)
-    pcp_data.log_name = 'Timestep Precipitation Accumulation'
-    pcp_data.level = 'A3'
     pcp_data.description = 'Total Timestep Accumulated Precpitation'
     pcp_data[:] = ts_pcp
 
@@ -98,7 +96,7 @@ def get_temp_2m(data, outfile):
     temp_data = outfile.createVariable(
                 'temp_2m',
                 'f8',
-                ('Time', 'Latitude', 'Longitude'))
+                ('time', 'lat', 'lon'))
     temp_data.units = data.variables['T2'].units
     temp_data.description = data.variables['T2'].description
     temp_data[:] = temp_2m
@@ -109,7 +107,7 @@ def get_q_2m(data, outfile):
     q_data = outfile.createVariable(
                 'q_2m',
                 'f8',
-                ('Time', 'Latitude', 'Longitude'))
+                ('time', 'lat', 'lon'))
     q_data.units = data.variables['Q2'].units
     q_data.description = data.variables['Q2'].description
     q_data[:] = q_2m
@@ -120,7 +118,7 @@ def get_v_10m(data, outfile):
     v_data = outfile.createVariable(
                 'v_10m',
                 'f8',
-                ('Time', 'Latitude', 'Longitude'))
+                ('time', 'lat', 'lon'))
     v_data.units = data.variables['V10'].units
     v_data.description = data.variables['V10'].description
     v_data[:] = v_10m
@@ -131,7 +129,7 @@ def get_u_10m(data, outfile):
     u_data = outfile.createVariable(
                 'u_10m',
                 'f8',
-                ('Time', 'Latitude', 'Longitude'))
+                ('time', 'lat', 'lon'))
     u_data.units = data.variables['U10'].units
     u_data.description = data.variables['U10'].description
     u_data[:] = u_10m
@@ -142,7 +140,7 @@ def get_mslp(data, outfile):
     slp_data = outfile.createVariable(
                 'mslp',
                 'f8',
-                ('Time', 'Latitude', 'Longitude'))
+                ('time', 'lat', 'lon'))
     slp_data.units = slp.units
     slp_data.description = slp.description
     slp_data[:] = slp
@@ -153,7 +151,7 @@ def get_uh(data, outfile):
     uh_data = outfile.createVariable(
                 'UH',
                 'f8',
-                ('Time', 'Latitude', 'Longitude'))
+                ('time', 'lat', 'lon'))
     uh_data.units = uh.units
     uh_data.description = uh.description
     uh_data[:] = uh
@@ -166,7 +164,7 @@ def get_cape(data, outfile):
     cape_data = outfile.createVariable(
                 'cape',
                 'f8',
-                ('Time', 'Latitude', 'Longitude'))
+                ('time', 'lat', 'lon'))
     cape_data.units = str(cape.units)
     cape_data.description = '2D Convective Available Potential Energy'
     cape_data[:] = cape.m
@@ -174,7 +172,7 @@ def get_cape(data, outfile):
     cin_data = outfile.createVariable(
                 'cin',
                 'f8',
-                ('Time', 'Latitude', 'Longitude'))
+                ('time', 'lat', 'lon'))
     cin_data.units = str(cin.units)
     cin_data.description = '2D Convective Inhibition'
     cin_data[:] = cin.m
@@ -185,7 +183,7 @@ def get_dbz(data, outfile):
     dbz_data = outfile.createVariable(
                 'DBZ',
                 'f8',
-                ('Time', 'Latitude', 'Longitude'))
+                ('time', 'lat', 'lon'))
     dbz_data.units = dbz.units
     dbz_data.description = dbz.description
     dbz_data[:] = dbz
