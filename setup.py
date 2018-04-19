@@ -8,5 +8,6 @@ setup(
     author='Tyler Wixtrom',
     author_email='tyler.wixtrom@ttu.edu',
     description='Python WRF Post Processor',
-    packages=['PWPP','metpy', 'wrf-python', 'netCDF4', 'numpy'],
+    packages=['PWPP'],
+    requires=['netcdf4', 'numpy', 'metpy', 'xarray']
 )
