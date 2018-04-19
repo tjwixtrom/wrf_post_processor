@@ -1,5 +1,6 @@
 linters:
   flake8:
-    fixer: true
+    max-line-length: 90
+    fixer: false
 fixers:
-  enable: true
+  enable: false

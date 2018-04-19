@@ -20,8 +20,13 @@ def get_variables():
         'q_2m': ['Specific humidity at 2m', 2, 'Q2'],
         'u_10m': ['U-component of wind at 10m', 2, 'U10'],
         'v_10m': ['V-component of wind at 10m', 2, 'V10'],
-        'cu_pcp': ['Shallow cumulus accumulated precipitation', 2, 'RAINSH'],
+        'conv_pcp': ['Shallow cumulus accumulated precipitation', 2, 'RAINSH'],
         'grid_pcp': ['Grid scale accumulated precipitation', 2, 'RAINNC'],
-        'tot_pcp': ['Total accumulated precipitation', 3, None]
+        'tot_pcp': ['Total accumulated precipitation', 2, None],
+        'timestep_pcp': ['Total timestep accumulated precipitation', 2, None],
+        'UH': ['Updraft helicity', 0, 'updraft_helicity'],
+        'cape': ['2D convective available potetial energy', 0, 'cape_2d'],
+        'cin': ['2D convective inhibition', 0, 'cape_2d'],
+        'refl': ['Maximum reflectivity', 0, 'mdbz']
     }
     return variables
