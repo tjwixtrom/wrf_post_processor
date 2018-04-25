@@ -101,21 +101,21 @@ def wrfpost(inname, outname, variables, plevs=None):
 
     # write times, lats, lons, and plevs to output file
     valid_times = outfile.createVariable('valid_time_ut', 'f8', ('time',))
-    valid_times.units = 'seconds since 1970-01-01 UTC'
+    valid_times.units = 'seconds since 2015-01-01 12 UTC'
     valid_times.description = 'Model Forecast Times'
     valid_times[:] = date2num(vtimes, valid_times.units)
     del vtimes
 
-    latitude = outfile.createVariable('lat', 'f8', ('time', 'lat', 'lon'))
+    latitude = outfile.createVariable('lat', 'f8', ('lat', 'lon'))
     latitude.units = lat.units
     latitude.description = lat.description
-    latitude[:] = np.array(lat)
+    latitude[:] = np.array(lat[0, ])
     del lat
 
-    longitude = outfile.createVariable('lon', 'f8', ('time', 'lat', 'lon'))
+    longitude = outfile.createVariable('lon', 'f8', ('lat', 'lon'))
     longitude.units = lon.units
     longitude.description = lon.description
-    longitude[:] = np.array(lon)
+    longitude[:] = np.array(lon[0, ])
     del lon
 
     # interpolate to isobaric levels and save to file
