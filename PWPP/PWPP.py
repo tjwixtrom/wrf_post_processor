@@ -10,7 +10,7 @@ import warnings
 from .variable_def import get_variables
 from .calc import (get_isobaric_variables, get_precip, get_timestep_precip,
                    get_temp_2m, get_q_2m, get_u_10m, get_v_10m, get_mslp, get_uh,
-                   get_cape, get_dbz)
+                   get_cape, get_dbz, get_dewpt_2m)
 
 
 def wrfpost(inname, outname, variables, plevs=None):
@@ -160,4 +160,8 @@ def wrfpost(inname, outname, variables, plevs=None):
 
     if 'refl' in other_vars:
         get_dbz(data, outfile)
+
+    if 'dewpt_2m' in other_vars:
+        get_dewpt_2m(data, outfile)
+
     outfile.close()

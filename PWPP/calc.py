@@ -187,3 +187,15 @@ def get_dbz(data, outfile):
     dbz_data.units = dbz.units
     dbz_data.description = dbz.description
     dbz_data[:] = dbz
+
+
+def get_dewpt_2m(data, outfile):
+    """Gets the 2m dewpoint data"""
+    dewpt_2m = getvar(data, 'td2', ALL_TIMES)
+    dewpt_data = outfile.createVariable(
+                'dewpt_2m',
+                'f8',
+                ('time', 'lat', 'lon'))
+    dewpt_data.units = dewpt_2m.units
+    dewpt_data.description = dewpt_2m.description
+    dewpt_data[:] = dewpt_2m
