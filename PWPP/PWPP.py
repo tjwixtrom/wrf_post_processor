@@ -4,7 +4,7 @@
 
 import numpy as np
 from netCDF4 import Dataset, date2num
-import datetime
+from datetime import datetime
 from wrf import getvar, ALL_TIMES
 import warnings
 from .variable_def import get_variables
@@ -56,8 +56,7 @@ def wrfpost(inname, outname, variables, plevs=None):
     # parse time string to make CF-compliant
     vtimes = []
     for i in range(times.shape[0]):
-        vtimes.append(datetime.datetime.strptime(str(times[i]),
-                                                 '%Y-%m-%dT%H:%M:%S.000000000'))
+        vtimes.append(datetime.strptime(str(times[i]), '%Y-%m-%dT%H:%M:%S.000000000'))
 
     # open the output file
     outfile = Dataset(outname, 'w')
@@ -95,9 +94,8 @@ def wrfpost(inname, outname, variables, plevs=None):
         p_lev[:] = plevs.to('Pa').m
         if len(iso_vars) < 1:
             warnings.warn('Pressure levels specified but no isobaric variables requested')
-    else:
-        if len(iso_vars) > 0:
-            raise ValueError('Isobaric variables requested, no pressure levels given')
+    elif len(iso_vars) > 0:
+        raise ValueError('Isobaric variables requested, no pressure levels given')
 
     # write times, lats, lons, and plevs to output file
     valid_times = outfile.createVariable('valid_time_ut', 'f8', ('time',))

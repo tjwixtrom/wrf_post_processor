@@ -17,7 +17,7 @@ def get_variables():
         'pres': ['Pressure on model levels', 0, 'p'],
         'mslp': ['Pressure reduced to mean sea level', 0, 'slp'],
         'temp_2m': ['Temperature at 2m', 2, 'T2'],
-        'dewpt_2m': ['Dewpoint temperature at 2m', 1, 'td2'],
+        'dewpt_2m': ['Dewpoint temperature at 2m', 2, 'td2'],
         'q_2m': ['Specific humidity at 2m', 2, 'Q2'],
         'u_10m': ['U-component of wind at 10m', 2, 'U10'],
         'v_10m': ['V-component of wind at 10m', 2, 'V10'],
