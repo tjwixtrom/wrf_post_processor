@@ -54,6 +54,12 @@ def wrfpost(inname, outname, variables, plevs=None):
     lat = getvar(data, 'lat', ALL_TIMES)
     lon = getvar(data, 'lon', ALL_TIMES)
 
+    # Check what the input data type is and set output
+    in_type = lat.dtype
+    if in_type == 'float32':
+        dtype = 'f4'
+    else:
+        dtype = 'f8'
     # parse time string to make CF-compliant
     vtimes = []
     for i in range(times.shape[0]):
@@ -89,7 +95,7 @@ def wrfpost(inname, outname, variables, plevs=None):
     # create dimension for isobaric levels
     if plevs is not None:
         outfile.createDimension('pressure levels', None)
-        p_lev = outfile.createVariable('pressure levels', 'f8', ('pressure levels'))
+        p_lev = outfile.createVariable('pressure levels', dtype, ('pressure levels'))
         p_lev.units = 'Pascal'
         p_lev.description = 'Isobaric Pressure Levels'
         p_lev[:] = plevs.to('Pa').m
@@ -99,19 +105,19 @@ def wrfpost(inname, outname, variables, plevs=None):
         raise ValueError('Isobaric variables requested, no pressure levels given')
 
     # write times, lats, lons, and plevs to output file
-    valid_times = outfile.createVariable('valid_time_ut', 'f8', ('time',))
+    valid_times = outfile.createVariable('valid_time_ut', dtype, ('time',))
     valid_times.units = 'seconds since 1970-01-01 UTC'
     valid_times.description = 'Model Forecast Times'
     valid_times[:] = date2num(vtimes, valid_times.units)
     del vtimes
 
-    latitude = outfile.createVariable('lat', 'f8', ('time', 'lat', 'lon'))
+    latitude = outfile.createVariable('lat', dtype, ('time', 'lat', 'lon'))
     latitude.units = lat.units
     latitude.description = lat.description
     latitude[:] = np.array(lat)
     del lat
 
-    longitude = outfile.createVariable('lon', 'f8', ('time', 'lat', 'lon'))
+    longitude = outfile.createVariable('lon', dtype, ('time', 'lat', 'lon'))
     longitude.units = lon.units
     longitude.description = lon.description
     longitude[:] = np.array(lon)
@@ -119,48 +125,48 @@ def wrfpost(inname, outname, variables, plevs=None):
 
     # interpolate to isobaric levels and save to file
     if len(iso_vars) > 0:
-        get_isobaric_variables(data, iso_vars, plevs, outfile)
+        get_isobaric_variables(data, iso_vars, plevs, outfile, dtype)
 
     # get precipitation variables if requested
     if 'tot_pcp' in other_vars:
         if ('grid_pcp' in other_vars) and ('conv_pcp' in other_vars):
-            get_precip(data, outfile, RAINNC_out=True, RAINSH_out=True)
+            get_precip(data, outfile, dtype, RAINNC_out=True, RAINSH_out=True)
         elif 'grid_pcp' in other_vars:
-            get_precip(data, outfile, RAINNC_out=True)
+            get_precip(data, outfile, dtype, RAINNC_out=True)
         elif 'conv_pcp' in other_vars:
-            get_precip(data, outfile, RAINSH_out=True)
+            get_precip(data, outfile, dtype, RAINSH_out=True)
         else:
-            get_precip(data, outfile)
+            get_precip(data, outfile, dtype)
 
     if 'timestep_pcp' in other_vars:
-        get_timestep_precip(data, outfile)
+        get_timestep_precip(data, outfile, dtype)
 
     # get surface variables if requested
     if 'temp_2m' in other_vars:
-        get_temp_2m(data, outfile)
+        get_temp_2m(data, outfile, dtype)
 
     if 'q_2m' in other_vars:
-        get_q_2m(data, outfile)
+        get_q_2m(data, outfile, dtype)
 
     if 'u_10m' in other_vars:
-        get_u_10m(data, outfile)
+        get_u_10m(data, outfile, dtype)
 
     if 'v_10m' in other_vars:
-        get_v_10m(data, outfile)
+        get_v_10m(data, outfile, dtype)
 
     if 'mslp' in other_vars:
-        get_mslp(data, outfile)
+        get_mslp(data, outfile, dtype)
 
     if 'UH' in other_vars:
-        get_uh(data, outfile)
+        get_uh(data, outfile, dtype)
 
     if ('cape' in other_vars) or ('cin' in other_vars):
-        get_cape(data, outfile)
+        get_cape(data, outfile, dtype)
 
     if 'refl' in other_vars:
-        get_dbz(data, outfile)
+        get_dbz(data, outfile, dtype)
 
     if 'dewpt_2m' in other_vars:
-        get_dewpt_2m(data, outfile)
+        get_dewpt_2m(data, outfile, dtype)
 
     outfile.close()
