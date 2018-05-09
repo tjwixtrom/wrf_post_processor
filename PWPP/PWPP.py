@@ -13,7 +13,7 @@ from .calc import (get_isobaric_variables, get_precip, get_timestep_precip,
                    get_cape, get_dbz)
 
 
-def wrfpost(inname, outname, variables, plevs=None):
+def wrfpost(inname, outname, variables, plevs=None, met=False):
     """
     Runs the WRF Post Processor
     :param inname: string of input file path
@@ -50,8 +50,8 @@ def wrfpost(inname, outname, variables, plevs=None):
 
     # get out time, lat, lon from original data
     times = getvar(data, 'times', ALL_TIMES, meta=False)
-    lat = getvar(data, 'lat', ALL_TIMES)
-    lon = getvar(data, 'lon', ALL_TIMES)
+    lat = getvar(data, 'lat')
+    lon = getvar(data, 'lon')
 
     # parse time string to make CF-compliant
     vtimes = []
@@ -59,8 +59,14 @@ def wrfpost(inname, outname, variables, plevs=None):
         vtimes.append(datetime.datetime.strptime(str(times[i]),
                                                  '%Y-%m-%dT%H:%M:%S.000000000'))
 
+    # check if outputting for MET tools
+    if met:
+        dtype = 'f8'
+    else:
+        dtype = 'f8'
+
     # open the output file
-    outfile = Dataset(outname, 'w')
+    outfile = Dataset(outname, 'w', format='NETCDF4')
 
     # copy original global attributes
     for name in data.ncattrs():
@@ -89,7 +95,7 @@ def wrfpost(inname, outname, variables, plevs=None):
     # create dimension for isobaric levels
     if plevs is not None:
         outfile.createDimension('pressure levels', plevs.size)
-        p_lev = outfile.createVariable('pressure levels', 'f8', ('pressure levels'))
+        p_lev = outfile.createVariable('pressure levels', dtype, ('pressure levels'))
         p_lev.units = 'Pascal'
         p_lev.description = 'Isobaric Pressure Levels'
         p_lev[:] = plevs.to('Pa').m
@@ -100,22 +106,26 @@ def wrfpost(inname, outname, variables, plevs=None):
             raise ValueError('Isobaric variables requested, no pressure levels given')
 
     # write times, lats, lons, and plevs to output file
-    valid_times = outfile.createVariable('valid_time_ut', 'f8', ('time',))
-    valid_times.units = 'seconds since 2015-01-01 12 UTC'
-    valid_times.description = 'Model Forecast Times'
+    valid_times = outfile.createVariable('time', dtype, ('time',))
+    valid_times.units = 'seconds since 1970-01-01 00 UTC'
+    valid_times.description = 'Model Forecast Times in Unix Time'
     valid_times[:] = date2num(vtimes, valid_times.units)
     del vtimes
 
-    latitude = outfile.createVariable('lat', 'f8', ('lat', 'lon'))
-    latitude.units = lat.units
+    latitude = outfile.createVariable('lat', dtype, ('lat', 'lon'))
+    latitude.units = 'degrees_north'
+    latitude.long_name = 'latitude'
+    latitude.standard_name = 'latitude'
     latitude.description = lat.description
-    latitude[:] = np.array(lat[0, ])
+    latitude[:] = np.array(lat)
     del lat
 
-    longitude = outfile.createVariable('lon', 'f8', ('lat', 'lon'))
-    longitude.units = lon.units
+    longitude = outfile.createVariable('lon', dtype, ('lat', 'lon'))
+    longitude.units = 'degrees_east'
+    longitude.long_name = 'longitude'
+    longitude.standard_name = 'longitude'
     longitude.description = lon.description
-    longitude[:] = np.array(lon[0, ])
+    longitude[:] = np.array(lon)
     del lon
 
     # interpolate to isobaric levels and save to file
@@ -125,39 +135,39 @@ def wrfpost(inname, outname, variables, plevs=None):
     # get precipitation variables if requested
     if 'tot_pcp' in other_vars:
         if ('grid_pcp' in other_vars) and ('conv_pcp' in other_vars):
-            get_precip(data, outfile, RAINNC_out=True, RAINSH_out=True)
+            get_precip(data, outfile, dtype, RAINNC_out=True, RAINSH_out=True)
         elif 'grid_pcp' in other_vars:
-            get_precip(data, outfile, RAINNC_out=True)
+            get_precip(data, outfile, dtype, RAINNC_out=True)
         elif 'conv_pcp' in other_vars:
-            get_precip(data, outfile, RAINSH_out=True)
+            get_precip(data, outfile, dtype, RAINSH_out=True)
         else:
-            get_precip(data, outfile)
+            get_precip(data, outfile, dtype)
 
     if 'timestep_pcp' in other_vars:
-        get_timestep_precip(data, outfile)
+        get_timestep_precip(data, outfile, dtype)
 
     # get surface variables if requested
     if 'temp_2m' in other_vars:
-        get_temp_2m(data, outfile)
+        get_temp_2m(data, outfile, dtype)
 
     if 'q_2m' in other_vars:
-        get_q_2m(data, outfile)
+        get_q_2m(data, outfile, dtype)
 
     if 'u_10m' in other_vars:
-        get_u_10m(data, outfile)
+        get_u_10m(data, outfile, dtype)
 
     if 'v_10m' in other_vars:
-        get_v_10m(data, outfile)
+        get_v_10m(data, outfile, dtype)
 
     if 'mslp' in other_vars:
-        get_mslp(data, outfile)
+        get_mslp(data, outfile, dtype)
 
     if 'UH' in other_vars:
-        get_uh(data, outfile)
+        get_uh(data, outfile, dtype)
 
     if ('cape' in other_vars) or ('cin' in other_vars):
-        get_cape(data, outfile)
+        get_cape(data, outfile, dtype)
 
     if 'refl' in other_vars:
-        get_dbz(data, outfile)
+        get_dbz(data, outfile, dtype)
     outfile.close()
