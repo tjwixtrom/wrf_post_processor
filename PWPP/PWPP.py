@@ -30,6 +30,7 @@ def wrfpost(inname, outname, variables, plevs=None):
             pres: Pressure on model levels
             mslp: Pressure reduced to mean sea level
             temp_2m: Temperature at 2m
+            dewpt_2m: Dewpoint temperature at 2m
             q_2m: Specific humidity at 2m
             u_10m: U-component of wind at 10m
             v_10m: V-component of wind at 10m
@@ -66,7 +67,7 @@ def wrfpost(inname, outname, variables, plevs=None):
         setattr(outfile, name, getattr(data, name))
 
     # create output dimensions
-    outfile.createDimension('time', data.dimensions['Time'].size)
+    outfile.createDimension('time', None)
     outfile.createDimension('lat', data.dimensions['south_north'].size)
     outfile.createDimension('lon', data.dimensions['west_east'].size)
 
@@ -87,7 +88,7 @@ def wrfpost(inname, outname, variables, plevs=None):
             raise KeyError('Definition for '+variable+' not found.')
     # create dimension for isobaric levels
     if plevs is not None:
-        outfile.createDimension('pressure levels', plevs.size)
+        outfile.createDimension('pressure levels', None)
         p_lev = outfile.createVariable('pressure levels', 'f8', ('pressure levels'))
         p_lev.units = 'Pascal'
         p_lev.description = 'Isobaric Pressure Levels'
