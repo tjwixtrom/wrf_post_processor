@@ -7,8 +7,7 @@ from metpy.units import units
 from .variable_def import get_variables
 
 
-def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression,
-                           complevel, nproc):
+def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression, complevel):
     """Gets isobaric variables from a list"""
     # use wrf-python to get data for each of the variables
     var_def = get_variables()
