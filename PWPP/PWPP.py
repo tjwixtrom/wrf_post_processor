@@ -132,7 +132,8 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
     # interpolate to isobaric levels and save to file
     if len(iso_vars) > 0:
         print('Processing isobaric variables')
-        get_isobaric_variables(data, iso_vars, plevs, outfile, dtype, compression, complevel)
+        get_isobaric_variables(data, iso_vars, plevs, outfile, dtype, compression,
+                               complevel, nproc)
 
     # get precipitation variables if requested
     if 'tot_pcp' in other_vars:
