@@ -4,7 +4,6 @@ import numpy as np
 from wrf import getvar, ALL_TIMES
 from metpy.calc import log_interp
 from metpy.units import units
-import multiprocessing as mp
 from .variable_def import get_variables
 
 
@@ -19,7 +18,7 @@ def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression,
     p_np = np.array(p) * units(p.units)
 
     # write each of the variables to the output file
-    def pres_data(i):
+    def _pres_data_(data, plevs, p_np, var_list, i):
         var_data = getvar(data, var_def[var_list[i]][2], ALL_TIMES)
         var_data_np = np.array(var_data)
         iso_data = log_interp(plevs, p_np, var_data_np, axis=1)
@@ -47,10 +46,8 @@ def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression,
             pres_data.description = var_data.description
         pres_data[:] = iso_data
 
-    with mp.Pool(processes=nproc) as pool:
-        pool.map(pres_data, range(len(var_list)))
-        pool.close()
-        pool.join()
+    for i in range(len(var_list)):
+        _pres_data_(data, plevs, p_np, var_list, i)
 
 
 def get_precip(data, outfile, dtype, compression, complevel,

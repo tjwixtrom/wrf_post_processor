@@ -13,7 +13,7 @@ from .calc import (get_isobaric_variables, get_precip, get_timestep_precip,
                    get_cape, get_dbz, get_dewpt_2m)
 
 
-def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=4, nproc=4):
+def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=4):
     """
     Runs the WRF Post Processor
     :param inname: string of input file path
@@ -132,8 +132,7 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
     # interpolate to isobaric levels and save to file
     if len(iso_vars) > 0:
         print('Processing isobaric variables')
-        get_isobaric_variables(data, iso_vars, plevs, outfile, dtype, compression,
-                               complevel, nproc)
+        get_isobaric_variables(data, iso_vars, plevs, outfile, dtype, compression, complevel)
 
     # get precipitation variables if requested
     if 'tot_pcp' in other_vars:
