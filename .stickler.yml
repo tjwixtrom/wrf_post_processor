@@ -1,6 +1,6 @@
 linters:
   flake8:
-    max-line-length: 90
+    max-line-length: 95
     fixer: false
 fixers:
   enable: false

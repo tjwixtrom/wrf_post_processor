@@ -13,7 +13,7 @@ from .calc import (get_isobaric_variables, get_precip, get_timestep_precip,
                    get_cape, get_dbz, get_dewpt_2m)
 
 
-def wrfpost(inname, outname, variables, plevs=None):
+def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=4):
     """
     Runs the WRF Post Processor
     :param inname: string of input file path
@@ -30,6 +30,7 @@ def wrfpost(inname, outname, variables, plevs=None):
             pres: Pressure on model levels
             mslp: Pressure reduced to mean sea level
             temp_2m: Temperature at 2m
+            dewpt_2m: Dewpoint temperature at 2m
             q_2m: Specific humidity at 2m
             u_10m: U-component of wind at 10m
             v_10m: V-component of wind at 10m
@@ -43,6 +44,8 @@ def wrfpost(inname, outname, variables, plevs=None):
             refl: Maximum reflectivity
 
     :param plevs: optional array of desired output pressure levels
+           compression: True or False : netCDF variable level compression
+           complevel: level of variable compression
     :return: File of post-processed WRF output
     """
     # open the input file
@@ -53,6 +56,12 @@ def wrfpost(inname, outname, variables, plevs=None):
     lat = getvar(data, 'lat', ALL_TIMES)
     lon = getvar(data, 'lon', ALL_TIMES)
 
+    # Check what the input data type is and set output
+    in_type = lat.dtype
+    if in_type == 'float32':
+        dtype = 'f4'
+    else:
+        dtype = 'f8'
     # parse time string to make CF-compliant
     vtimes = []
     for i in range(times.shape[0]):
@@ -66,7 +75,7 @@ def wrfpost(inname, outname, variables, plevs=None):
         setattr(outfile, name, getattr(data, name))
 
     # create output dimensions
-    outfile.createDimension('time', data.dimensions['Time'].size)
+    outfile.createDimension('time', None)
     outfile.createDimension('lat', data.dimensions['south_north'].size)
     outfile.createDimension('lon', data.dimensions['west_east'].size)
 
@@ -87,8 +96,8 @@ def wrfpost(inname, outname, variables, plevs=None):
             raise KeyError('Definition for '+variable+' not found.')
     # create dimension for isobaric levels
     if plevs is not None:
-        outfile.createDimension('pressure levels', plevs.size)
-        p_lev = outfile.createVariable('pressure levels', 'f8', ('pressure levels'))
+        outfile.createDimension('pressure_levels', None)
+        p_lev = outfile.createVariable('pressure_levels', dtype, ('pressure_levels'))
         p_lev.units = 'Pascal'
         p_lev.description = 'Isobaric Pressure Levels'
         p_lev[:] = plevs.to('Pa').m
@@ -98,19 +107,22 @@ def wrfpost(inname, outname, variables, plevs=None):
         raise ValueError('Isobaric variables requested, no pressure levels given')
 
     # write times, lats, lons, and plevs to output file
-    valid_times = outfile.createVariable('valid_time_ut', 'f8', ('time',))
-    valid_times.units = 'seconds since 1970-01-01 UTC'
+    valid_times = outfile.createVariable('valid_time', dtype, ('time',),
+                                         zlib=compression, complevel=complevel)
+    valid_times.units = 'hours since '+str(vtimes[0])
     valid_times.description = 'Model Forecast Times'
     valid_times[:] = date2num(vtimes, valid_times.units)
     del vtimes
 
-    latitude = outfile.createVariable('lat', 'f8', ('time', 'lat', 'lon'))
+    latitude = outfile.createVariable('lat', dtype, ('time', 'lat', 'lon'),
+                                      zlib=compression, complevel=complevel)
     latitude.units = lat.units
     latitude.description = lat.description
     latitude[:] = np.array(lat)
     del lat
 
-    longitude = outfile.createVariable('lon', 'f8', ('time', 'lat', 'lon'))
+    longitude = outfile.createVariable('lon', dtype, ('time', 'lat', 'lon'),
+                                       zlib=compression, complevel=complevel)
     longitude.units = lon.units
     longitude.description = lon.description
     longitude[:] = np.array(lon)
@@ -118,48 +130,62 @@ def wrfpost(inname, outname, variables, plevs=None):
 
     # interpolate to isobaric levels and save to file
     if len(iso_vars) > 0:
-        get_isobaric_variables(data, iso_vars, plevs, outfile)
+        print('Processing isobaric variables')
+        get_isobaric_variables(data, iso_vars, plevs, outfile, dtype, compression, complevel)
 
     # get precipitation variables if requested
     if 'tot_pcp' in other_vars:
+        print('Processing variable: tot_pcp')
         if ('grid_pcp' in other_vars) and ('conv_pcp' in other_vars):
-            get_precip(data, outfile, RAINNC_out=True, RAINSH_out=True)
+            get_precip(data, outfile, dtype, compression, complevel,
+                       RAINNC_out=True, RAINSH_out=True)
         elif 'grid_pcp' in other_vars:
-            get_precip(data, outfile, RAINNC_out=True)
+            get_precip(data, outfile, dtype, compression, complevel, RAINNC_out=True)
         elif 'conv_pcp' in other_vars:
-            get_precip(data, outfile, RAINSH_out=True)
+            get_precip(data, outfile, dtype, compression, complevel, RAINSH_out=True)
         else:
-            get_precip(data, outfile)
+            get_precip(data, outfile, dtype, compression, complevel)
 
     if 'timestep_pcp' in other_vars:
-        get_timestep_precip(data, outfile)
+        print('Processing variable: timestep_pcp')
+        get_timestep_precip(data, outfile, dtype, compression, complevel)
 
     # get surface variables if requested
     if 'temp_2m' in other_vars:
-        get_temp_2m(data, outfile)
-
-    if 'q_2m' in other_vars:
-        get_q_2m(data, outfile)
-
-    if 'u_10m' in other_vars:
-        get_u_10m(data, outfile)
-
-    if 'v_10m' in other_vars:
-        get_v_10m(data, outfile)
-
-    if 'mslp' in other_vars:
-        get_mslp(data, outfile)
-
-    if 'UH' in other_vars:
-        get_uh(data, outfile)
-
-    if ('cape' in other_vars) or ('cin' in other_vars):
-        get_cape(data, outfile)
-
-    if 'refl' in other_vars:
-        get_dbz(data, outfile)
+        print('Processing variable: temp_2m')
+        get_temp_2m(data, outfile, dtype, compression, complevel)
 
     if 'dewpt_2m' in other_vars:
-        get_dewpt_2m(data, outfile)
+        print('Processing variable: dewpt_2m')
+        get_dewpt_2m(data, outfile, dtype, compression, complevel)
+
+    if 'q_2m' in other_vars:
+        print('Processing variable: q_2m')
+        get_q_2m(data, outfile, dtype, compression, complevel)
+
+    if 'u_10m' in other_vars:
+        print('Processing variable: u_10m')
+        get_u_10m(data, outfile, dtype, compression, complevel)
+
+    if 'v_10m' in other_vars:
+        print('Processing variable: v_10m')
+        get_v_10m(data, outfile, dtype, compression, complevel)
+
+    if 'mslp' in other_vars:
+        print('Processing variable: mslp')
+        get_mslp(data, outfile, dtype, compression, complevel)
+
+    if 'UH' in other_vars:
+        print('Processing variable: UH')
+        get_uh(data, outfile, dtype, compression, complevel)
+
+    if ('cape' in other_vars) or ('cin' in other_vars):
+        print('Processing variable: cape and cin')
+        get_cape(data, outfile, dtype, compression, complevel)
+
+    if 'refl' in other_vars:
+        print('Processing variable: relf')
+        get_dbz(data, outfile, dtype, compression, complevel)
 
     outfile.close()
+    print('Success Complete WRF Post-Processing')
