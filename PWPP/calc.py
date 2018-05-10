@@ -19,7 +19,7 @@ def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression,
     p_np = np.array(p) * units(p.units)
 
     # write each of the variables to the output file
-    def _pres_data_(i):
+    def pres_data(i):
         var_data = getvar(data, var_def[var_list[i]][2], ALL_TIMES)
         var_data_np = np.array(var_data)
         iso_data = log_interp(plevs, p_np, var_data_np, axis=1)
@@ -48,7 +48,7 @@ def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression,
         pres_data[:] = iso_data
 
     with mp.Pool(processes=nproc) as pool:
-        pool.map(_pres_data_, range(len(var_list)))
+        pool.map(pres_data, range(len(var_list)))
         pool.close()
         pool.join()
 
