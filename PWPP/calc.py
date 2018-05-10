@@ -4,27 +4,25 @@ import numpy as np
 from wrf import getvar, ALL_TIMES
 from metpy.calc import log_interp
 from metpy.units import units
+import multiprocessing as mp
 from .variable_def import get_variables
 
 
-def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression, complevel):
+def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression,
+                           complevel, nproc):
     """Gets isobaric variables from a list"""
     # use wrf-python to get data for each of the variables
-    var_data = []
     var_def = get_variables()
-    for name in var_list:
-        var_data.append(getvar(data, var_def[name][2], ALL_TIMES))
-
-    # convert data to numpy arrays
-    var_data_np = [np.array(data) for data in var_data]
 
     # get pressure array and attach units
     p = getvar(data, 'p', ALL_TIMES)
     p_np = np.array(p) * units(p.units)
-    iso_data = log_interp(plevs, p_np, *var_data_np, axis=1)
 
     # write each of the variables to the output file
-    for i in range(len(var_list)):
+    def _pres_data_(i):
+        var_data = getvar(data, var_def[var_list[i]][2], ALL_TIMES)
+        var_data_np = np.array(var_data)
+        iso_data = log_interp(plevs, p_np, var_data_np, axis=1)
         pres_data = outfile.createVariable(
                     var_list[i],
                     dtype,
@@ -46,8 +44,13 @@ def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression, c
         elif var_list[i] == 'avor':
             pres_data.description = 'absolute vorticity on isobaric surfaces'
         else:
-            pres_data.description = var_data[i].description
-        pres_data[:] = iso_data[i]
+            pres_data.description = var_data.description
+        pres_data[:] = iso_data
+
+    with mp.Pool(processes=nproc) as pool:
+        pool.map(_pres_data_, range(len(var_list)))
+        pool.close()
+        pool.join()
 
 
 def get_precip(data, outfile, dtype, compression, complevel,

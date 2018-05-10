@@ -13,7 +13,7 @@ from .calc import (get_isobaric_variables, get_precip, get_timestep_precip,
                    get_cape, get_dbz, get_dewpt_2m)
 
 
-def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=4):
+def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=4, nproc=4):
     """
     Runs the WRF Post Processor
     :param inname: string of input file path
@@ -46,6 +46,7 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
     :param plevs: optional array of desired output pressure levels
            compression: True or False : netCDF variable level compression
            complevel: level of variable compression
+           nproc: Number of available processors
     :return: File of post-processed WRF output
     """
     # open the input file
