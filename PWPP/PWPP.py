@@ -8,12 +8,12 @@ from datetime import datetime
 from wrf import getvar, ALL_TIMES
 import warnings
 from .variable_def import get_variables
-from .calc import (get_isobaric_variables, get_precip, get_timestep_precip,
-                   get_temp_2m, get_q_2m, get_u_10m, get_v_10m, get_mslp, get_uh,
-                   get_cape, get_dbz, get_dewpt_2m)
+from .calc import (get_isobaric_variables, get_precip, get_temp_2m, get_q_2m, get_u_10m,
+                   get_v_10m, get_mslp, get_uh, get_cape, get_dbz, get_dewpt_2m)
 
 
-def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=4):
+def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=4,
+            format='NETCDF4'):
     """
     Runs the WRF Post Processor
     :param inname: string of input file path
@@ -44,8 +44,9 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
             refl: Maximum reflectivity
 
     :param plevs: optional array of desired output pressure levels
-           compression: True or False : netCDF variable level compression
-           complevel: level of variable compression
+    :param compression: True or False : netCDF variable level compression
+    :param complevel: level of variable compression
+    :param format: Output netCDF file format. Default is netCDF4.
     :return: File of post-processed WRF output
     """
     # open the input file
@@ -68,7 +69,7 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
         vtimes.append(datetime.strptime(str(times[i]), '%Y-%m-%dT%H:%M:%S.000000000'))
 
     # open the output file
-    outfile = Dataset(outname, 'w')
+    outfile = Dataset(outname, 'w', format=format)
 
     # copy original global attributes
     for name in data.ncattrs():
@@ -96,7 +97,7 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
             raise KeyError('Definition for '+variable+' not found.')
     # create dimension for isobaric levels
     if plevs is not None:
-        outfile.createDimension('pressure_levels', None)
+        outfile.createDimension('pressure_levels', plevs.size)
         p_lev = outfile.createVariable('pressure_levels', dtype, ('pressure_levels'))
         p_lev.units = 'Pascal'
         p_lev.description = 'Isobaric Pressure Levels'
@@ -105,6 +106,7 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
             warnings.warn('Pressure levels specified but no isobaric variables requested')
     elif len(iso_vars) > 0:
         raise ValueError('Isobaric variables requested, no pressure levels given')
+        outfile.close()
 
     # write times, lats, lons, and plevs to output file
     valid_times = outfile.createVariable('valid_time', dtype, ('time',),
@@ -134,21 +136,14 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
         get_isobaric_variables(data, iso_vars, plevs, outfile, dtype, compression, complevel)
 
     # get precipitation variables if requested
-    if 'tot_pcp' in other_vars:
-        print('Processing variable: tot_pcp')
-        if ('grid_pcp' in other_vars) and ('conv_pcp' in other_vars):
-            get_precip(data, outfile, dtype, compression, complevel,
-                       RAINNC_out=True, RAINSH_out=True)
-        elif 'grid_pcp' in other_vars:
-            get_precip(data, outfile, dtype, compression, complevel, RAINNC_out=True)
-        elif 'conv_pcp' in other_vars:
-            get_precip(data, outfile, dtype, compression, complevel, RAINSH_out=True)
-        else:
-            get_precip(data, outfile, dtype, compression, complevel)
-
-    if 'timestep_pcp' in other_vars:
-        print('Processing variable: timestep_pcp')
-        get_timestep_precip(data, outfile, dtype, compression, complevel)
+    if ('tot_pcp' in other_vars) or ('timestep_pcp' in other_vars):
+        print('Processing Precipitation Variables')
+        if ('tot_pcp' in other_vars) and ('timestep_pcp' in other_vars):
+            get_precip(data, outfile, dtype, compression, complevel, timestep=True, total=True)
+        elif 'tot_pcp' in other_vars:
+            get_precip(data, outfile, dtype, compression, complevel, total=True)
+        elif 'timestep_pcp' in other_vars:
+            get_precip(data, outfile, dtype, compression, complevel, timestep=True)
 
     # get surface variables if requested
     if 'temp_2m' in other_vars:
