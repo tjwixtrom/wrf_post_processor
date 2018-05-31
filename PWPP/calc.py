@@ -10,27 +10,24 @@ from .variable_def import get_variables
 def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression, complevel):
     """Gets isobaric variables from a list"""
     # use wrf-python to get data for each of the variables
-    var_data = []
     var_def = get_variables()
-    for name in var_list:
-        var_data.append(getvar(data, var_def[name][2], ALL_TIMES))
-
-    # convert data to numpy arrays
-    var_data_np = [np.array(data) for data in var_data]
-
     # get pressure array and attach units
     p = getvar(data, 'p', ALL_TIMES)
-    p_np = np.array(p) * units(p.units)
-    iso_data = log_interp(plevs, p_np, *var_data_np, axis=1)
+    p_np = np.array(p.data) * units(p.units)
 
-    # write each of the variables to the output file
     for i in range(len(var_list)):
+        name = var_list[i]
+        var_data = np.array(getvar(data, var_def[name][2], ALL_TIMES).data)
+        iso_data = log_interp(plevs, p_np, var_data, axis=1)
+
+        # write each of the variables to the output file
+
         pres_data = outfile.createVariable(
                     var_list[i],
                     dtype,
                     ('time', 'pressure_levels', 'lat', 'lon'),
                     zlib=compression, complevel=complevel)
-        pres_data.units = var_data[i].units
+        pres_data.units = var_data.units
         if var_list[i] == 'height':
             pres_data.decription = 'height [MSL] of isobaric surfaces'
         elif var_list[i] == 'uwnd':
@@ -46,26 +43,27 @@ def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression, c
         elif var_list[i] == 'avor':
             pres_data.description = 'absolute vorticity on isobaric surfaces'
         else:
-            pres_data.description = var_data[i].description
+            pres_data.description = var_data.description
         pres_data[:] = iso_data[i]
 
 
 def get_precip(data, outfile, dtype, compression, complevel,
-               RAINNC_out=False, RAINSH_out=False):
+               RAINNC_out=False, RAINSH_out=False, timestep=False, total=True):
     """Gets the total precipitation from grid-scale and convective"""
     # Get grid-scale and convective precip, add for total precip
-    grid_pcp = data.variables['RAINNC'][:] * units(data.variables['RAINNC'].units)
-    conv_pcp = data.variables['RAINSH'][:] * units(data.variables['RAINSH'].units)
+    grid_pcp = data.variables['RAINNC'][:].data * units(data.variables['RAINNC'].units)
+    conv_pcp = data.variables['RAINSH'][:].data * units(data.variables['RAINSH'].units)
     tot_pcp = grid_pcp + conv_pcp
 
-    pcp_data = outfile.createVariable(
-                'tot_pcp',
-                dtype,
-                ('time', 'lat', 'lon'),
-                zlib=compression, complevel=complevel)
-    pcp_data.units = str(tot_pcp.units)
-    pcp_data.description = 'Total Accumulated Precpitation'
-    pcp_data[:] = tot_pcp.m
+    if total:
+        pcp_data = outfile.createVariable(
+                    'tot_pcp',
+                    dtype,
+                    ('time', 'lat', 'lon'),
+                    zlib=compression, complevel=complevel)
+        pcp_data.units = str(tot_pcp.units)
+        pcp_data.description = 'Total Accumulated Precpitation'
+        pcp_data[:] = tot_pcp.m
 
     if RAINNC_out:
         grid_pcp_data = outfile.createVariable(
@@ -87,33 +85,26 @@ def get_precip(data, outfile, dtype, compression, complevel,
         conv_pcp_data.description = data.variables['RAINSH'].description
         conv_pcp_data[:] = conv_pcp.m
 
-
-def get_timestep_precip(data, outfile, dtype, compression, complevel):
-    """Gets the precipitation accumulation for each timestep"""
-    # Get grid-scale and convective precip, add for total precip
-    grid_pcp = data.variables['RAINNC'][:] * units(data.variables['RAINNC'].units)
-    conv_pcp = data.variables['RAINSH'][:] * units(data.variables['RAINSH'].units)
-    tot_pcp = grid_pcp + conv_pcp
-
     # Calculate precip accumulation at each timestep
-    ts_pcp = np.zeros(tot_pcp.shape)
-    for i in range(tot_pcp.shape[0] - 1):
-        ts_pcp[i + 1, ] = tot_pcp[i + 1, ] - tot_pcp[i, ]
+    if timestep:
+        ts_pcp = np.zeros(tot_pcp.shape)
+        for i in range(tot_pcp.shape[0] - 1):
+            ts_pcp[i + 1, ] = tot_pcp[i + 1, ] - tot_pcp[i, ]
 
-    # Save to file
-    pcp_data = outfile.createVariable(
-                'timestep_pcp',
-                dtype,
-                ('time', 'lat', 'lon'),
-                zlib=compression, complevel=complevel)
-    pcp_data.units = str(tot_pcp.units)
-    pcp_data.description = 'Total Timestep Accumulated Precpitation'
-    pcp_data[:] = ts_pcp
+        # Save to file
+        pcp_data = outfile.createVariable(
+                    'timestep_pcp',
+                    dtype,
+                    ('time', 'lat', 'lon'),
+                    zlib=compression, complevel=complevel)
+        pcp_data.units = str(tot_pcp.units)
+        pcp_data.description = 'Total Timestep Accumulated Precpitation'
+        pcp_data[:] = ts_pcp.data
 
 
 def get_temp_2m(data, outfile, dtype, compression, complevel):
     """Gets the 2m temperature data"""
-    temp_2m = data.variables['T2'][:]
+    temp_2m = data.variables['T2'][:].data
     temp_data = outfile.createVariable(
                 'temp_2m',
                 dtype,
@@ -121,11 +112,11 @@ def get_temp_2m(data, outfile, dtype, compression, complevel):
                 zlib=compression, complevel=complevel)
     temp_data.units = data.variables['T2'].units
     temp_data.description = data.variables['T2'].description
-    temp_data[:] = temp_2m
+    temp_data[:] = temp_2m.data
 
 
 def get_q_2m(data, outfile, dtype, compression, complevel):
-    q_2m = data.variables['Q2'][:]
+    q_2m = data.variables['Q2'][:].data
     q_data = outfile.createVariable(
                 'q_2m',
                 dtype,
@@ -137,7 +128,7 @@ def get_q_2m(data, outfile, dtype, compression, complevel):
 
 
 def get_v_10m(data, outfile, dtype, compression, complevel):
-    v_10m = data.variables['V10'][:]
+    v_10m = data.variables['V10'][:].data
     v_data = outfile.createVariable(
                 'v_10m',
                 dtype,
@@ -149,7 +140,7 @@ def get_v_10m(data, outfile, dtype, compression, complevel):
 
 
 def get_u_10m(data, outfile, dtype, compression, complevel):
-    u_10m = data.variables['U10'][:]
+    u_10m = data.variables['U10'][:].data
     u_data = outfile.createVariable(
                 'u_10m',
                 dtype,
@@ -169,7 +160,7 @@ def get_mslp(data, outfile, dtype, compression, complevel):
                 zlib=compression, complevel=complevel)
     slp_data.units = slp.units
     slp_data.description = slp.description
-    slp_data[:] = slp
+    slp_data[:] = slp.data
 
 
 def get_uh(data, outfile, dtype, compression, complevel):
@@ -181,13 +172,13 @@ def get_uh(data, outfile, dtype, compression, complevel):
                 zlib=compression, complevel=complevel)
     uh_data.units = uh.units
     uh_data.description = uh.description
-    uh_data[:] = uh
+    uh_data[:] = uh.data
 
 
 def get_cape(data, outfile, dtype, compression, complevel):
     capecin = getvar(data, 'cape_2d', ALL_TIMES)
-    cape = np.array(capecin[0, ]) * units('J/kg')
-    cin = np.array(capecin[1, ]) * units('J/kg')
+    cape = np.array(capecin[0, ].data) * units('J/kg')
+    cin = np.array(capecin[1, ].data) * units('J/kg')
     cape_data = outfile.createVariable(
                 'cape',
                 dtype,
@@ -216,7 +207,7 @@ def get_dbz(data, outfile, dtype, compression, complevel):
                 zlib=compression, complevel=complevel)
     dbz_data.units = dbz.units
     dbz_data.description = dbz.description
-    dbz_data[:] = dbz
+    dbz_data[:] = dbz.data
 
 
 def get_dewpt_2m(data, outfile, dtype, compression, complevel):
@@ -229,4 +220,4 @@ def get_dewpt_2m(data, outfile, dtype, compression, complevel):
                 zlib=compression, complevel=complevel)
     dewpt_data.units = dewpt_2m.units
     dewpt_data.description = dewpt_2m.description
-    dewpt_data[:] = dewpt_2m
+    dewpt_data[:] = dewpt_2m.data
