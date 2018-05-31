@@ -17,8 +17,8 @@ def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression, c
 
     for i in range(len(var_list)):
         name = var_list[i]
-        var_data = np.array(getvar(data, var_def[name][2], ALL_TIMES).data)
-        iso_data = log_interp(plevs, p_np, var_data, axis=1)
+        var_data = getvar(data, var_def[name][2], ALL_TIMES)
+        iso_data = log_interp(plevs, p_np, var_data.data, axis=1)
 
         # write each of the variables to the output file
 
@@ -44,7 +44,7 @@ def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression, c
             pres_data.description = 'absolute vorticity on isobaric surfaces'
         else:
             pres_data.description = var_data.description
-        pres_data[:] = iso_data[i]
+        pres_data[:] = iso_data
 
 
 def get_precip(data, outfile, dtype, compression, complevel,
@@ -104,7 +104,7 @@ def get_precip(data, outfile, dtype, compression, complevel,
 
 def get_temp_2m(data, outfile, dtype, compression, complevel):
     """Gets the 2m temperature data"""
-    temp_2m = data.variables['T2'][:].data
+    temp_2m = data.variables['T2'][:]
     temp_data = outfile.createVariable(
                 'temp_2m',
                 dtype,
@@ -116,7 +116,7 @@ def get_temp_2m(data, outfile, dtype, compression, complevel):
 
 
 def get_q_2m(data, outfile, dtype, compression, complevel):
-    q_2m = data.variables['Q2'][:].data
+    q_2m = data.variables['Q2'][:]
     q_data = outfile.createVariable(
                 'q_2m',
                 dtype,
@@ -128,7 +128,7 @@ def get_q_2m(data, outfile, dtype, compression, complevel):
 
 
 def get_v_10m(data, outfile, dtype, compression, complevel):
-    v_10m = data.variables['V10'][:].data
+    v_10m = data.variables['V10'][:]
     v_data = outfile.createVariable(
                 'v_10m',
                 dtype,
@@ -140,7 +140,7 @@ def get_v_10m(data, outfile, dtype, compression, complevel):
 
 
 def get_u_10m(data, outfile, dtype, compression, complevel):
-    u_10m = data.variables['U10'][:].data
+    u_10m = data.variables['U10'][:]
     u_data = outfile.createVariable(
                 'u_10m',
                 dtype,
@@ -177,8 +177,8 @@ def get_uh(data, outfile, dtype, compression, complevel):
 
 def get_cape(data, outfile, dtype, compression, complevel):
     capecin = getvar(data, 'cape_2d', ALL_TIMES)
-    cape = np.array(capecin[0, ].data) * units('J/kg')
-    cin = np.array(capecin[1, ].data) * units('J/kg')
+    cape = np.array(capecin[0, ]) * units('J/kg')
+    cin = np.array(capecin[1, ]) * units('J/kg')
     cape_data = outfile.createVariable(
                 'cape',
                 dtype,

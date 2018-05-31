@@ -97,7 +97,7 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
             raise KeyError('Definition for '+variable+' not found.')
     # create dimension for isobaric levels
     if plevs is not None:
-        outfile.createDimension('pressure_levels', None)
+        outfile.createDimension('pressure_levels', plevs.size)
         p_lev = outfile.createVariable('pressure_levels', dtype, ('pressure_levels'))
         p_lev.units = 'Pascal'
         p_lev.description = 'Isobaric Pressure Levels'
@@ -106,6 +106,7 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
             warnings.warn('Pressure levels specified but no isobaric variables requested')
     elif len(iso_vars) > 0:
         raise ValueError('Isobaric variables requested, no pressure levels given')
+        outfile.close()
 
     # write times, lats, lons, and plevs to output file
     valid_times = outfile.createVariable('valid_time', dtype, ('time',),
