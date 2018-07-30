@@ -1,0 +1,15 @@
+Metadata-Version: 1.1
+Name: PWPP
+Version: 0.1
+Summary: Python WRF Post Processor
+Home-page: UNKNOWN
+Author: Tyler Wixtrom
+Author-email: tyler.wixtrom@ttu.edu
+License: UNKNOWN
+Description-Content-Type: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Requires: netcdf4
+Requires: numpy
+Requires: metpy
+Requires: xarray

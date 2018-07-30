@@ -1,0 +1,28 @@
+# Create full conda environment for development, including some useful tools
+name: wrf-post
+channels:
+  - conda-forge/label/testing
+  - conda-forge
+dependencies:
+  - python=3
+  - numpy
+  - pint
+  - metpy
+  - netcdf4
+  - xarray
+  - pytest>=2.4
+  - pytest-cov
+  - pytest-flake8
+  - pytest-mpl
+  - pytest-runner
+  - flake8-builtins!=1.4.0
+  - flake8-comprehensions
+  - flake8-copyright
+  - flake8-docstrings
+  - flake8-import-order
+  - flake8-mutable
+  - flake8-pep3101
+  - flake8-print
+  - flake8-quotes
+  - pep8-naming
+  - wrf-python

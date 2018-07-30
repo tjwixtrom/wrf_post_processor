@@ -1,3 +1,7 @@
 .idea/
 __pychache__/
 *.pyc
+*.DS_Store
+*.pytest_cache
+*/outfile.nc
+.ropeproject/*

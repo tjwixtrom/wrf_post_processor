@@ -34,8 +34,6 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
             q_2m: Specific humidity at 2m
             u_10m: U-component of wind at 10m
             v_10m: V-component of wind at 10m
-            conv_pcp: Shallow cumulus accumulated precipitation
-            grid_pcp: Grid scale accumulated precipitation
             tot_pcp: Total accumulated precipitation
             timestep_pcp: Total timestep accumulated precipitation
             UH: Updraft helicity
