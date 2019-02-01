@@ -95,7 +95,7 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
             raise KeyError('Definition for '+variable+' not found.')
     # create dimension for isobaric levels
     if plevs is not None:
-        outfile.createDimension('pressure_levels', plevs.size)
+        outfile.createDimension('plevels', plevs.size)
         p_lev = outfile.createVariable('pressure_levels', dtype, ('pressure_levels'))
         p_lev.units = 'Pascal'
         p_lev.description = 'Isobaric Pressure Levels'
@@ -109,19 +109,19 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
     # write times, lats, lons, and plevs to output file
     valid_times = outfile.createVariable('valid_time', dtype, ('time',),
                                          zlib=compression, complevel=complevel)
-    valid_times.units = 'hours since '+str(vtimes[0])
+    valid_times.units = 'seconds since '+str(vtimes[0])
     valid_times.description = 'Model Forecast Times'
     valid_times[:] = date2num(vtimes, valid_times.units)
     del vtimes
 
-    latitude = outfile.createVariable('lat', dtype, ('time', 'lat', 'lon'),
+    latitude = outfile.createVariable('latitude', dtype, ('time', 'lat', 'lon'),
                                       zlib=compression, complevel=complevel)
     latitude.units = lat.units
     latitude.description = lat.description
     latitude[:] = np.array(lat)
     del lat
 
-    longitude = outfile.createVariable('lon', dtype, ('time', 'lat', 'lon'),
+    longitude = outfile.createVariable('longitude', dtype, ('time', 'lat', 'lon'),
                                        zlib=compression, complevel=complevel)
     longitude.units = lon.units
     longitude.description = lon.description
