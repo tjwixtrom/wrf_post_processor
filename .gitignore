@@ -5,3 +5,4 @@ __pychache__/
 *.pytest_cache
 */outfile.nc
 .ropeproject/*
+*.json
