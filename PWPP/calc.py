@@ -2,49 +2,49 @@
 
 import numpy as np
 from wrf import getvar, ALL_TIMES
-from metpy.calc import log_interp
+from metpy.interpolate import log_interpolate_1d
 from metpy.units import units
 from .variable_def import get_variables
 
 
-def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression, complevel):
+def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression, complevel,
+                           chunks=None):
     """Gets isobaric variables from a list"""
     # use wrf-python to get data for each of the variables
     var_def = get_variables()
     # get pressure array and attach units
-    p = getvar(data, 'p', ALL_TIMES)
-    p_np = np.array(p.data) * units(p.units)
+    p = getvar(data, 'p', ALL_TIMES).chunk(chunks=chunks)
+    # p_np = np.array(p.data) * units(p.units)
 
-    for i in range(len(var_list)):
-        name = var_list[i]
-        var_data = getvar(data, var_def[name][2], ALL_TIMES)
-        iso_data = log_interp(plevs, p_np, var_data.data, axis=1)
+    for var in var_list:
+        var_data = getvar(data, var_def[var][2], ALL_TIMES).chunk(chunks=chunks)
+        iso_data = log_interpolate_1d(plevs, p, var_data.data, axis=1)
 
         # write each of the variables to the output file
 
         pres_data = outfile.createVariable(
-                    var_list[i],
+                    var,
                     dtype,
                     ('time', 'pressure_levels', 'lat', 'lon'),
                     zlib=compression, complevel=complevel)
         pres_data.units = var_data.units
-        if var_list[i] == 'height':
+        if var == 'height':
             pres_data.decription = 'height [MSL] of isobaric surfaces'
-        elif var_list[i] == 'uwnd':
+        elif var == 'uwnd':
             pres_data.description = 'u-wind component on isobaric surfaces'
-        elif var_list[i] == 'vwnd':
+        elif var == 'vwnd':
             pres_data.description = 'v-wind component on isobaric surfaces'
-        elif var_list[i] == 'wwnd':
+        elif var == 'wwnd':
             pres_data.description = 'w-wind component on isobaric surfaces'
-        elif var_list[i] == 'temp':
+        elif var == 'temp':
             pres_data.description = 'temperature on isobaric surfaces'
-        elif var_list[i] == 'dewpt':
+        elif var == 'dewpt':
             pres_data.description = 'dewpoint temperature on isobaric surfaces'
-        elif var_list[i] == 'avor':
+        elif var == 'avor':
             pres_data.description = 'absolute vorticity on isobaric surfaces'
         else:
             pres_data.description = var_data.description
-        pres_data[:] = iso_data
+        pres_data[:] = np.array(iso_data)
 
 
 def get_precip(data, outfile, dtype, compression, complevel,
@@ -151,8 +151,8 @@ def get_u_10m(data, outfile, dtype, compression, complevel):
     u_data[:] = u_10m
 
 
-def get_mslp(data, outfile, dtype, compression, complevel):
-    slp = getvar(data, 'slp', ALL_TIMES)
+def get_mslp(data, outfile, dtype, compression, complevel, chunks=None):
+    slp = getvar(data, 'slp', ALL_TIMES).chunk(chunks=chunks)
     slp_data = outfile.createVariable(
                 'mslp',
                 dtype,
@@ -163,8 +163,8 @@ def get_mslp(data, outfile, dtype, compression, complevel):
     slp_data[:] = slp.data
 
 
-def get_uh(data, outfile, dtype, compression, complevel):
-    uh = getvar(data, 'updraft_helicity', ALL_TIMES)
+def get_uh(data, outfile, dtype, compression, complevel, chunks=None):
+    uh = getvar(data, 'updraft_helicity', ALL_TIMES).chunk(chunks=chunks)
     uh_data = outfile.createVariable(
                 'UH',
                 dtype,
@@ -198,8 +198,8 @@ def get_cape(data, outfile, dtype, compression, complevel):
     cin_data[:] = cin.m
 
 
-def get_dbz(data, outfile, dtype, compression, complevel):
-    dbz = getvar(data, 'mdbz', ALL_TIMES)
+def get_dbz(data, outfile, dtype, compression, complevel, chunks=None):
+    dbz = getvar(data, 'mdbz', ALL_TIMES).chunk(chunks=chunks)
     dbz_data = outfile.createVariable(
                 'DBZ',
                 dtype,
@@ -210,9 +210,9 @@ def get_dbz(data, outfile, dtype, compression, complevel):
     dbz_data[:] = dbz.data
 
 
-def get_dewpt_2m(data, outfile, dtype, compression, complevel):
+def get_dewpt_2m(data, outfile, dtype, compression, complevel, chunks=None):
     """Gets the 2m dewpoint data"""
-    dewpt_2m = getvar(data, 'td2', ALL_TIMES)
+    dewpt_2m = getvar(data, 'td2', ALL_TIMES).chunk(chunks=chunks)
     dewpt_data = outfile.createVariable(
                 'dewpt_2m',
                 dtype,

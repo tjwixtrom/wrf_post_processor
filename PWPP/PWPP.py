@@ -13,7 +13,7 @@ from .calc import (get_isobaric_variables, get_precip, get_temp_2m, get_q_2m, ge
 
 
 def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=4,
-            format='NETCDF4'):
+            format='NETCDF4', chunks=None):
     """
     Runs the WRF Post Processor
     :param inname: string of input file path
@@ -45,6 +45,7 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
     :param compression: True or False : netCDF variable level compression
     :param complevel: level of variable compression
     :param format: Output netCDF file format. Default is netCDF4.
+    :param chunks: tuple of chunk sizes for each dimension
     :return: File of post-processed WRF output
     """
     # open the input file
@@ -95,8 +96,8 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
             raise KeyError('Definition for '+variable+' not found.')
     # create dimension for isobaric levels
     if plevs is not None:
-        outfile.createDimension('plevels', plevs.size)
-        p_lev = outfile.createVariable('pressure_levels', dtype, ('pressure_levels'))
+        outfile.createDimension('pressure_levels', plevs.size)
+        p_lev = outfile.createVariable('plevels', dtype, ('pressure_levels'))
         p_lev.units = 'Pascal'
         p_lev.description = 'Isobaric Pressure Levels'
         p_lev[:] = plevs.to('Pa').m
@@ -131,7 +132,8 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
     # interpolate to isobaric levels and save to file
     if len(iso_vars) > 0:
         print('Processing isobaric variables')
-        get_isobaric_variables(data, iso_vars, plevs, outfile, dtype, compression, complevel)
+        get_isobaric_variables(data, iso_vars, plevs, outfile, dtype, compression, complevel,
+                               chunks=chunks)
 
     # get precipitation variables if requested
     if ('tot_pcp' in other_vars) or ('timestep_pcp' in other_vars):
@@ -150,7 +152,7 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
 
     if 'dewpt_2m' in other_vars:
         print('Processing variable: dewpt_2m')
-        get_dewpt_2m(data, outfile, dtype, compression, complevel)
+        get_dewpt_2m(data, outfile, dtype, compression, complevel, chunks=chunks)
 
     if 'q_2m' in other_vars:
         print('Processing variable: q_2m')
@@ -166,11 +168,11 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
 
     if 'mslp' in other_vars:
         print('Processing variable: mslp')
-        get_mslp(data, outfile, dtype, compression, complevel)
+        get_mslp(data, outfile, dtype, compression, complevel, chunks=chunks)
 
     if 'UH' in other_vars:
         print('Processing variable: UH')
-        get_uh(data, outfile, dtype, compression, complevel)
+        get_uh(data, outfile, dtype, compression, complevel, chunks=chunks)
 
     if ('cape' in other_vars) or ('cin' in other_vars):
         print('Processing variable: cape and cin')
@@ -178,7 +180,7 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
 
     if 'refl' in other_vars:
         print('Processing variable: relf')
-        get_dbz(data, outfile, dtype, compression, complevel)
+        get_dbz(data, outfile, dtype, compression, complevel, chunks=chunks)
 
     outfile.close()
     print('Success Complete WRF Post-Processing')

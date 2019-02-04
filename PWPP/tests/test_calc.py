@@ -158,7 +158,7 @@ def test_isobaric():
     variables = ['temp']
     plevs = [500] * units.hPa
     with pytest.warns(UserWarning):
-        wrfpost(datafile, outfile, variables, plevs=plevs)
+        wrfpost(datafile, outfile, variables, plevs=plevs, chunks={'Time': 1})
     data = Dataset(outfile)
     test_data = data.variables['temp'][:]
     data_truth = Dataset('PWPP/tests/true_out.nc')
@@ -184,5 +184,22 @@ def test_precip():
     truth_data = data_truth.variables['tot_pcp'][:]
     assert_array_almost_equal(test_data, truth_data, 4)
 
+    data.close()
+    data_truth.close()
+
+
+def test_isobaric():
+    """Test for isobaric function"""
+    datafile = 'PWPP/tests/testfile.nc'  # Taken from units testing on WRF-Python package
+    outfile = 'PWPP/tests/outfile.nc'
+    variables = ['uwnd']
+    plevs = [500] * units.hPa
+    with pytest.warns(UserWarning):
+        wrfpost(datafile, outfile, variables, plevs=plevs, chunks={'Time': 1})
+    data = Dataset(outfile)
+    test_data = data.variables['temp'][:]
+    data_truth = Dataset('PWPP/tests/true_out.nc')
+    truth_data = data_truth.variables['temp'][:]
+    assert_array_almost_equal(test_data, truth_data, 4)
     data.close()
     data_truth.close()
