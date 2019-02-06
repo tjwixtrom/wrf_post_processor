@@ -96,7 +96,7 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
     # create dimension for isobaric levels
     if plevs is not None:
         outfile.createDimension('pressure_levels', plevs.size)
-        p_lev = outfile.createVariable('pressure_levels', dtype, ('pressure_levels'))
+        p_lev = outfile.createVariable('plevels', dtype, ('pressure_levels'))
         p_lev.units = 'Pascal'
         p_lev.description = 'Isobaric Pressure Levels'
         p_lev[:] = plevs.to('Pa').m
@@ -114,14 +114,14 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
     valid_times[:] = date2num(vtimes, valid_times.units)
     del vtimes
 
-    latitude = outfile.createVariable('lat', dtype, ('time', 'lat', 'lon'),
+    latitude = outfile.createVariable('latitude', dtype, ('time', 'lat', 'lon'),
                                       zlib=compression, complevel=complevel)
     latitude.units = lat.units
     latitude.description = lat.description
     latitude[:] = np.array(lat)
     del lat
 
-    longitude = outfile.createVariable('lon', dtype, ('time', 'lat', 'lon'),
+    longitude = outfile.createVariable('longitude', dtype, ('time', 'lat', 'lon'),
                                        zlib=compression, complevel=complevel)
     longitude.units = lon.units
     longitude.description = lon.description

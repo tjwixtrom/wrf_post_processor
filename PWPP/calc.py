@@ -2,7 +2,7 @@
 
 import numpy as np
 from wrf import getvar, ALL_TIMES
-from metpy.calc import log_interp
+from metpy.interpolate import log_interpolate_1d
 from metpy.units import units
 from .variable_def import get_variables
 
@@ -18,7 +18,7 @@ def get_isobaric_variables(data, var_list, plevs, outfile, dtype, compression, c
     for i in range(len(var_list)):
         name = var_list[i]
         var_data = getvar(data, var_def[name][2], ALL_TIMES)
-        iso_data = log_interp(plevs, p_np, var_data.data, axis=1)
+        iso_data = log_interpolate_1d(plevs, p_np, var_data.data, axis=1)
 
         # write each of the variables to the output file
 
