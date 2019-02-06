@@ -28,7 +28,7 @@ install:
   - conda info -a
 
   # Replace dep1 dep2 ... with your dependencies
-  - conda create -q -n test-environment -c conda-forge python=$TRAVIS_PYTHON_VERSION numpy netCDF4 wrf-python metpy xarray pytest
+  - conda create -q -n test-environment -c conda-forge python=$TRAVIS_PYTHON_VERSION numpy netCDF4 wrf-python metpy xarray pytest pint=0.8
   - source activate test-environment
   - conda develop .
 #  - python setup.py install
