@@ -109,7 +109,7 @@ def wrfpost(inname, outname, variables, plevs=None, compression=True, complevel=
     # write times, lats, lons, and plevs to output file
     valid_times = outfile.createVariable('valid_time', dtype, ('time',),
                                          zlib=compression, complevel=complevel)
-    valid_times.units = 'hours since '+str(vtimes[0])
+    valid_times.units = 'seconds since '+str(vtimes[0])
     valid_times.description = 'Model Forecast Times'
     valid_times[:] = date2num(vtimes, valid_times.units)
     del vtimes
